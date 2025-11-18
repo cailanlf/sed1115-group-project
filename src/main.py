@@ -54,6 +54,7 @@ def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
     Convert the given [0 - 1] x, y coordinates into coordinates on the board.
     """
+    return (x * 210, y * 297)
     raise NotImplementedError()
 
 def get_actual_angles(arm: 'ArmController') -> 'tuple[float, float]':
@@ -85,13 +86,12 @@ def main():
         x, y = potentiometer_states.get()
         pen_down = button_state.get()
 
-        print(x, y, f"x: {x:.4f}, y: {y:.4f}, pen: {'down' if pen_down else 'up'}")
 
         # convert x, y to board coordinates for the arm
-        # board_x, board_y = convert_board_coordinates(x, y)
+        board_x, board_y = convert_board_coordinates(x, y)
 
         # solve the inverse kinematics equations
-        kinematics_solution = solve_kinematics(x, y)
+        kinematics_solution = solve_kinematics(board_x, board_y)
 
         if kinematics_solution is None:
             # handle this
@@ -101,9 +101,12 @@ def main():
         alpha, beta = kinematics_solution
         
         arm_controller.set_arm_angles(alpha, beta)
+
         # arm_controller.set_wrist_down(pen_down)
 
         # error_shoulder, error_arm = get_actual_angles(arm_controller)
+        print(board_x, board_y, f"x: {board_x:.4f}, y: {board_y:.4f}, pen: {'down' if pen_down else 'up'}")
+        sleep_ms(50)
 
 if __name__ == "__main__":
     main()

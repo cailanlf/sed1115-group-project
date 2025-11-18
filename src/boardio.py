@@ -99,9 +99,9 @@ class ArmController:
     wrist: PWM
 
     def __init__(self, shoulder_pin: int, elbow_pin: int, wrist_pin: int):
-        self.shoulder = PWM(Pin(shoulder_pin))
-        self.elbow = PWM(Pin(elbow_pin))
-        self.wrist = PWM(Pin(wrist_pin))
+        self.shoulder = PWM(Pin(shoulder_pin), freq=50)
+        self.elbow = PWM(Pin(elbow_pin), freq=50)
+        self.wrist = PWM(Pin(wrist_pin), freq=50)
 
     def set_arm_angles(self, alpha: float, beta:float):
         shulder_angle = alpha - 75
