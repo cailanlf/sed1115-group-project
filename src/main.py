@@ -1,3 +1,4 @@
+import math
 from time import time_ns
 
 from boardio import PotentiometerState, ButtonState, ArmController
@@ -18,12 +19,36 @@ shoulder_pin = 0
 elbow_pin = 1
 wrist_pin = 2
 
-def solve_kinematics(x: float, y: float) -> 'tuple[float, float] | None':
+def solve_kinematics(
+    Cx: float, Cy: float,
+    Ax: float = -50, Ay: float = 139.5,
+    La: float = 155, Lb: float = 155
+) -> 'tuple[float, float] | None':
     """
     Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
     Returns None if there is no solution.
     """
-    raise NotImplementedError()
+    AC = math.sqrt(
+        (Ax - Cx)**2 + (Ay - Cy)**2
+    )
+    AbaseC = math.sqrt(
+        (Ax - Cx)**2 + Cy**2
+    )
+    angle_BAC = math.acos(
+        (La**2 + AC**2 - Lb**2) / (2 * La * AC)
+    )
+    angle_ACB = math.asin(
+        (La * math.sin(angle_BAC)) / Lb
+    )
+    angle_YAC = math.acos(
+        (Ay**2 + AC**2 - AbaseC**2) / (2 * Ay * AC)
+    )
+
+    # in degrees
+    alpha = math.degrees(angle_BAC + angle_YAC)
+    beta = math.degrees(angle_BAC + angle_ACB)
+
+    return (alpha, beta)
 
 def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
