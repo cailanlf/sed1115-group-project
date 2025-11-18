@@ -60,7 +60,7 @@ def main():
         x, y = potentiometer_states.get()
         pen_down = button_state.get()
 
-        print(x, y, f"x: {x:.f4}, y: {y:.f4}, pen: {'down' if pen_down else 'up'}")
+        print(x, y, f"x: {x:.4f}, y: {y:.4f}, pen: {'down' if pen_down else 'up'}")
 
         # convert x, y to board coordinates for the arm
         board_x, board_y = convert_board_coordinates(x, y)
@@ -75,8 +75,8 @@ def main():
         
         alpha, beta = kinematics_solution
         
-        arm_controller.set_arm_angles(alpha, beta)
-        arm_controller.set_wrist_down(pen_down)
+        # arm_controller.set_arm_angles(alpha, beta)
+        # arm_controller.set_wrist_down(pen_down)
 
         error_shoulder, error_arm = get_actual_angles(arm_controller)
 

@@ -17,6 +17,9 @@ class PotentiometerState:
         self.pot_x = ADC(Pin(x_pin))
         self.pot_y = ADC(Pin(y_pin))
 
+        self.x_value = 0
+        self.y_value = 0
+
         self.pot_poll_interval = pot_poll_interval
         self.timer = 0
 
@@ -53,7 +56,7 @@ class ButtonState:
     _btn: Pin
     _btn_debounce: float
 
-    _timer: float
+    _elapsed_time: float
 
     _toggled_on: bool
 
@@ -62,7 +65,7 @@ class ButtonState:
     def __init__(self, btn_pin: int, btn_debounce: float):
         self._btn = Pin(btn_pin)
         self._btn_debounce = btn_debounce
-        self.timer = 0
+        self._elapsed_time = 0
         self._toggled_on = False
         self._btn_last_pressed = False
 
@@ -76,18 +79,19 @@ class ButtonState:
         """
         Update the state with the elapsed time.
         """
-        self.elapsed_time += elapsed_time
+        self._elapsed_time += elapsed_time
 
         # get the button's current pressed state
         btn_pressed = self._btn.value()
 
         # debounce 
         if btn_pressed and not self._btn_last_pressed \
-                and self.elapsed_time >= self._btn_debounce:
-            self.elapsed_time = 0
+                and self._elapsed_time >= self._btn_debounce:
+            self._elapsed_time = 0
             self._toggled_on = not self._toggled_on
         
         self._btn_last_pressed = btn_pressed
 
 class ArmController:
     def __init__(self, shoulder_pin: int, elbow_pin: int, wrist_pin: int):
+        pass
