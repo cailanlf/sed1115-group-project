@@ -1,4 +1,5 @@
-from machine import ADC, Pin
+from machine import ADC, Pin, PWM
+from servo_translator import translate
 
 class PotentiometerState:
     """
@@ -93,5 +94,21 @@ class ButtonState:
         self._btn_last_pressed = btn_pressed
 
 class ArmController:
+    shoulder: PWM
+    elbow: PWM
+    wrist: PWM
+
     def __init__(self, shoulder_pin: int, elbow_pin: int, wrist_pin: int):
-        pass
+        self.shoulder = PWM(Pin(shoulder_pin))
+        self.elbow = PWM(Pin(elbow_pin))
+        self.wrist = PWM(Pin(wrist_pin))
+
+    def set_arm_angles(self, alpha: float, beta:float):
+        shulder_angle = alpha - 75
+        elbow_angle = 150 - beta
+
+        shulder_duty_cycle = translate(shulder_angle)
+        elbow_duty_cycle = translate(elbow_angle)
+
+        self.shoulder.duty_u16(shulder_duty_cycle)
+        self.elbow.duty_u16(elbow_duty_cycle)

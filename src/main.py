@@ -1,5 +1,5 @@
 import math
-from time import time_ns
+from time import time_ns, sleep_ms
 
 from boardio import PotentiometerState, ButtonState, ArmController
 
@@ -23,7 +23,7 @@ def solve_kinematics(
     Cx: float, Cy: float,
     Ax: float = -50, Ay: float = 139.5,
     La: float = 155, Lb: float = 155
-) -> 'tuple[float, float] | None':
+    ) -> 'tuple[float, float] | None':
     """
     Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
     Returns None if there is no solution.
@@ -88,7 +88,7 @@ def main():
         print(x, y, f"x: {x:.4f}, y: {y:.4f}, pen: {'down' if pen_down else 'up'}")
 
         # convert x, y to board coordinates for the arm
-        board_x, board_y = convert_board_coordinates(x, y)
+        # board_x, board_y = convert_board_coordinates(x, y)
 
         # solve the inverse kinematics equations
         kinematics_solution = solve_kinematics(x, y)
@@ -100,10 +100,10 @@ def main():
         
         alpha, beta = kinematics_solution
         
-        # arm_controller.set_arm_angles(alpha, beta)
+        arm_controller.set_arm_angles(alpha, beta)
         # arm_controller.set_wrist_down(pen_down)
 
-        error_shoulder, error_arm = get_actual_angles(arm_controller)
+        # error_shoulder, error_arm = get_actual_angles(arm_controller)
 
 if __name__ == "__main__":
     main()
