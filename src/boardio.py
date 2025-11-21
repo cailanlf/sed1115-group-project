@@ -103,7 +103,10 @@ class ArmController:
         self.elbow = PWM(Pin(elbow_pin), freq=50)
         self.wrist = PWM(Pin(wrist_pin), freq=50)
 
-    def set_arm_angles(self, alpha: float, beta:float):
+    def set_arm_angles(self, alpha: float, beta:float) -> None:
+        """
+        Move the arm to a specific position
+        """
         shoulder_angle = 90 - alpha
         elbow_angle = beta
 
@@ -112,3 +115,9 @@ class ArmController:
 
         self.shoulder.duty_u16(shoulder_duty_cycle)
         self.elbow.duty_u16(elbow_duty_cycle)
+
+    def move_wrist(self, pen_down: bool) -> None:
+        """
+        Set the pen to down or up
+        """
+        raise NotImplementedError()

@@ -28,21 +28,24 @@ def solve_kinematics(
     Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
     Returns None if there is no solution.
     """
-    AC = math.sqrt(
-        (Ax - Cx)**2 + (Ay - Cy)**2
-    )
-    AbaseC = math.sqrt(
-        (Ax - Cx)**2 + Cy**2
-    )
-    angle_BAC = math.acos(
-        (La**2 + AC**2 - Lb**2) / (2 * La * AC)
-    )
-    angle_ACB = math.asin(
-        (La * math.sin(angle_BAC)) / Lb
-    )
-    angle_YAC = math.acos(
-        (Ay**2 + AC**2 - AbaseC**2) / (2 * Ay * AC)
-    )
+    try:
+        AC = math.sqrt(
+            (Ax - Cx)**2 + (Ay - Cy)**2
+        )
+        AbaseC = math.sqrt(
+            (Ax - Cx)**2 + Cy**2
+        )
+        angle_BAC = math.acos(
+            (La**2 + AC**2 - Lb**2) / (2 * La * AC)
+        )
+        angle_ACB = math.asin(
+            (La * math.sin(angle_BAC)) / Lb
+        )
+        angle_YAC = math.acos(
+            (Ay**2 + AC**2 - AbaseC**2) / (2 * Ay * AC)
+        )
+    except ValueError:
+        return None
 
     # in degrees
     alpha = math.degrees(angle_BAC + angle_YAC)
