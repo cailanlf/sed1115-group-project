@@ -104,11 +104,11 @@ class ArmController:
         self.wrist = PWM(Pin(wrist_pin), freq=50)
 
     def set_arm_angles(self, alpha: float, beta:float):
-        shulder_angle = alpha - 75
-        elbow_angle = 150 - beta
+        shoulder_angle = 90 - alpha
+        elbow_angle = beta
 
-        shulder_duty_cycle = translate(shulder_angle)
+        shoulder_duty_cycle = translate(shoulder_angle)
         elbow_duty_cycle = translate(elbow_angle)
 
-        self.shoulder.duty_u16(shulder_duty_cycle)
+        self.shoulder.duty_u16(shoulder_duty_cycle)
         self.elbow.duty_u16(elbow_duty_cycle)

@@ -21,7 +21,7 @@ wrist_pin = 2
 
 def solve_kinematics(
     Cx: float, Cy: float,
-    Ax: float = -50, Ay: float = 139.5,
+    Ax: float = -25.4, Ay: float = 139.5,
     La: float = 155, Lb: float = 155
     ) -> 'tuple[float, float] | None':
     """
@@ -54,8 +54,7 @@ def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
     Convert the given [0 - 1] x, y coordinates into coordinates on the board.
     """
-    return (x * 210, y * 297)
-    raise NotImplementedError()
+    return (x * 215, y * 279.4)
 
 def get_actual_angles(arm: 'ArmController') -> 'tuple[float, float]':
     """
