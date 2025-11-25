@@ -1,4 +1,4 @@
-import math
+from math import sqrt
 from time import time_ns, sleep_ms
 
 from boardio import PotentiometerState, ButtonState, ArmController
@@ -84,6 +84,13 @@ def main():
     arm_controller = ArmController(shoulder_pin=shoulder_pin, elbow_pin=elbow_pin, wrist_pin=wrist_pin)
 
     start = time_ns()
+
+    # limit the X, Y movement to a certain velocity
+    interp_x, interp_y = 0, 0
+
+    # in u/s
+    velocity_limit = 200.0
+    
     while True:
         # update time 
         end = time_ns()
@@ -99,11 +106,26 @@ def main():
         pen_down = button_state.get()
 
         # convert x, y to board coordinates for the arm
+        # these are our target angles
         board_x, board_y = convert_board_coordinates(x, y)
+
+        # get a vector of the differences
+        diff_x, diff_y = board_x - interp_x, board_y - interp_y
+
+        dist = sqrt(diff_x ** 2 + diff_y ** 2)
+
+        # get the magnitude
+        velocity = dist * elapsed
+
+        # make unit vector
+        diff_x, diff_y = diff_x / velocity, diff_y / velocity
+
+        # move interp position up to max velocity
+        interp_x, interp_y = interp_x + diff_x * min(velocity_limit, velocity), interp_y + diff_y * min(velocity_limit, velocity) 
 
         # solve the inverse kinematics equations
         kinematics_solution = solve_kinematics(
-            board_x + x_offset, board_y + y_offset, 
+            interp_x + x_offset, interp_y + y_offset, 
             origin_x, origin_y, 
             shoulder_length, elbow_length
         )
