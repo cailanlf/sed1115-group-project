@@ -19,39 +19,49 @@ shoulder_pin = 0
 elbow_pin = 1
 wrist_pin = 2
 
+# offsets for angles and x, y positions
+shoulder_offset, elbow_offset = 120, 30
+x_offset, y_offset = 0, 0
+
+origin_x, origin_y = -55, 139.5
+shoulder_length, elbow_length = 155, 155
+
 def solve_kinematics(
-    Cx: float, Cy: float,
-    Ax: float = -25.4, Ay: float = 139.5,
-    La: float = 155, Lb: float = 155
+    target_x: float, target_y: float,
+    origin_x: float, origin_y: float,
+    sh_length: float, el_length: float,
     ) -> 'tuple[float, float] | None':
     """
     Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
     Returns None if there is no solution.
     """
-    try:
-        AC = math.sqrt(
-            (Ax - Cx)**2 + (Ay - Cy)**2
-        )
-        AbaseC = math.sqrt(
-            (Ax - Cx)**2 + Cy**2
-        )
-        angle_BAC = math.acos(
-            (La**2 + AC**2 - Lb**2) / (2 * La * AC)
-        )
-        angle_ACB = math.asin(
-            (La * math.sin(angle_BAC)) / Lb
-        )
-        angle_YAC = math.acos(
-            (Ay**2 + AC**2 - AbaseC**2) / (2 * Ay * AC)
-        )
-    except ValueError:
+    from math import sqrt, sin, cos, acos, atan2, degrees
+
+    x = target_x - origin_x
+    y = target_y - origin_y
+    L1, L2 = sh_length, el_length
+
+    # Distance to target
+    d = sqrt(x*x + y*y)
+
+    # If unreachable, return None
+    if d > L1 + L2 or d < abs(L1 - L2):
         return None
 
-    # in degrees
-    alpha = math.degrees(angle_BAC + angle_YAC)
-    beta = math.degrees(angle_BAC + angle_ACB)
+    # Law of cosines for beta
+    cos_beta = (d*d - L1*L1 - L2*L2) / (2 * L1 * L2)
 
-    return (alpha, beta)
+    # Numerical safety clamp
+    cos_beta = max(-1.0, min(1.0, cos_beta))
+
+    beta = acos(cos_beta)  # elbow-up
+
+    # Compute alpha
+    phi = atan2(y, x)
+    psi = atan2(L2 * sin(beta), L1 + L2 * cos(beta))
+    alpha = phi - psi
+
+    return degrees(alpha), degrees(beta)
 
 def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
@@ -88,19 +98,27 @@ def main():
         x, y = potentiometer_states.get()
         pen_down = button_state.get()
 
-
         # convert x, y to board coordinates for the arm
         board_x, board_y = convert_board_coordinates(x, y)
 
         # solve the inverse kinematics equations
-        kinematics_solution = solve_kinematics(board_x, board_y)
+        kinematics_solution = solve_kinematics(
+            board_x + x_offset, board_y + y_offset, 
+            origin_x, origin_y, 
+            shoulder_length, elbow_length
+        )
 
         if kinematics_solution is None:
             # handle this
-            raise NotImplementedError()
+            sleep_ms(50)
             continue
         
         alpha, beta = kinematics_solution
+
+        # apply alpha, beta offsets
+        alpha, beta = alpha + shoulder_offset, 180 - (beta + elbow_offset)
+
+        print(alpha, beta)
         
         arm_controller.set_arm_angles(alpha, beta)
 

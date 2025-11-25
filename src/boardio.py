@@ -103,15 +103,13 @@ class ArmController:
         self.elbow = PWM(Pin(elbow_pin), freq=50)
         self.wrist = PWM(Pin(wrist_pin), freq=50)
 
-    def set_arm_angles(self, alpha: float, beta:float) -> None:
+    def set_arm_angles(self, alpha: float, beta: float) -> None:
         """
         Move the arm to a specific position
         """
-        shoulder_angle = 90 - alpha
-        elbow_angle = beta
 
-        shoulder_duty_cycle = translate(shoulder_angle)
-        elbow_duty_cycle = translate(elbow_angle)
+        shoulder_duty_cycle = translate(alpha)
+        elbow_duty_cycle = translate(beta)
 
         self.shoulder.duty_u16(shoulder_duty_cycle)
         self.elbow.duty_u16(elbow_duty_cycle)
