@@ -23,13 +23,15 @@ wrist_pin = 2
 shoulder_offset, elbow_offset = 120, 30
 x_offset, y_offset = 0, 0
 
-origin_x, origin_y = -55, 139.5
+origin_x, origin_y = 0, 0
 shoulder_length, elbow_length = 155, 155
+
+paper_height, paper_width = 215, 279.4
 
 def solve_kinematics(
     target_x: float, target_y: float,
     origin_x: float, origin_y: float,
-    sh_length: float, el_length: float,
+    shoulder_length: float, elbow_length: float,
     ) -> 'tuple[float, float] | None':
     """
     Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
@@ -39,27 +41,24 @@ def solve_kinematics(
 
     x = target_x - origin_x
     y = target_y - origin_y
-    L1, L2 = sh_length, el_length
+    L1, L2 = shoulder_length, elbow_length
 
-    # Distance to target
-    d = sqrt(x*x + y*y)
+    AC = sqrt(x*x + y*y)
 
-    # If unreachable, return None
-    if d > L1 + L2 or d < abs(L1 - L2):
+    # if the target is out of reach, return None
+    if AC > L1 + L2 or AC < abs(L1 - L2):
         return None
 
-    # Law of cosines for beta
-    cos_beta = (d*d - L1*L1 - L2*L2) / (2 * L1 * L2)
+    angle_CAX = atan(y/x)
+    angle_BAC = acos(
+        (L1**2 + AC**2 - L2**2) / (2 * L1 * AC)
+    )
 
-    # Numerical safety clamp
-    cos_beta = max(-1.0, min(1.0, cos_beta))
+    alpha = angle_CAX - angle_BAC
+    beta = acos(
+        (L1**2 + L2**2 - AC**2) / (2 * L1 * L2)
+    )
 
-    beta = acos(cos_beta)  # elbow-up
-
-    # Compute alpha
-    phi = atan2(y, x)
-    psi = atan2(L2 * sin(beta), L1 + L2 * cos(beta))
-    alpha = phi - psi
 
     return degrees(alpha), degrees(beta)
 
@@ -67,7 +66,7 @@ def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
     Convert the given [0 - 1] x, y coordinates into coordinates on the board.
     """
-    return (x * 215, y * 279.4)
+    return (x * paper_width - paper_width/2, y * paper_height + 50)
 
 def get_actual_angles(arm: 'ArmController') -> 'tuple[float, float]':
     """
