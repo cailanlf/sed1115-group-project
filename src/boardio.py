@@ -13,29 +13,39 @@ class PotentiometerState:
     
     pot_poll_interval: float
     timer: float
+    alpha: float
 
-    def __init__(self, x_pin: int, y_pin: int, pot_poll_interval: float):
+    def __init__(self, x_pin: int, y_pin: int, pot_poll_interval: float, alpha: float = 0.15):
         self.pot_x = ADC(Pin(x_pin))
         self.pot_y = ADC(Pin(y_pin))
 
-        self.x_value = 0
-        self.y_value = 0
-
         self.pot_poll_interval = pot_poll_interval
         self.timer = 0
+        self.alpha = alpha
+        
+        # Initialize with a first read so we don't start at 0
+        self.x_value = self._read_raw(self.pot_x)
+        self.y_value = self._read_raw(self.pot_y)
+
+    def _read_raw(self, adc: ADC) -> float:
+        """
+        Helper to read and clamp a single ADC value.
+        """
+        val = adc.read_u16() / 65535.0
+        return 0. if val < 0. else 1. if val > 1. else val
 
     def _read(self):
         """
-        Read the values from the potentiometers and update the internal state.
+        Read the values from the potentiometers and update the internal state using EMA smoothing.
         """
+        # Read raw values
+        raw_x = self._read_raw(self.pot_x)
+        raw_y = self._read_raw(self.pot_y)
 
-        # read the values and convert them to floats
-        x = self.pot_x.read_u16() / 65535.0
-        y = self.pot_y.read_u16() / 65535.0
-
-        # clamp the x and y to 0.0 - 1.0 (just in case)
-        self.x_value = 0. if x < 0. else 1. if x > 1. else x
-        self.y_value = 0. if y < 0. else 1. if y > 1. else y
+        # Apply Exponential Moving Average (EMA)
+        # New = alpha * raw + (1 - alpha) * old
+        self.x_value = self.alpha * raw_x + (1 - self.alpha) * self.x_value
+        self.y_value = self.alpha * raw_y + (1 - self.alpha) * self.y_value
 
     def get(self) -> 'tuple[float, float]':
         """
