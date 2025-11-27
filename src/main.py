@@ -20,13 +20,13 @@ elbow_pin = 1
 wrist_pin = 2
 
 # offsets for angles and x, y positions
-shoulder_offset, elbow_offset = 120, 30
+shoulder_offset, elbow_offset = 42, 0
 x_offset, y_offset = 0, 0
 
 origin_x, origin_y = 0, 0
 shoulder_length, elbow_length = 155, 155
 
-paper_height, paper_width = 215, 279.4
+paper_width, paper_height = 215, 279.4
 
 def solve_kinematics(
     target_x: float, target_y: float,
@@ -37,24 +37,28 @@ def solve_kinematics(
     Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
     Returns None if there is no solution.
     """
-    from math import sqrt, sin, cos, acos, atan2, degrees
+    from math import sqrt, sin, cos, acos, atan2, degrees, atan
 
     x = target_x - origin_x
     y = target_y - origin_y
     L1, L2 = shoulder_length, elbow_length
 
-    AC = sqrt(x*x + y*y)
+    AC = sqrt(
+        (x - -50)**2 + (y - 139.7)**2
+    )
 
     # if the target is out of reach, return None
     if AC > L1 + L2 or AC < abs(L1 - L2):
         return None
 
-    angle_CAX = atan(y/x)
+    angle_CAAbase = atan2(x + 50, 139.7 - y)
     angle_BAC = acos(
         (L1**2 + AC**2 - L2**2) / (2 * L1 * AC)
     )
 
-    alpha = angle_CAX - angle_BAC
+
+    alpha = angle_CAAbase - angle_BAC
+
     beta = acos(
         (L1**2 + L2**2 - AC**2) / (2 * L1 * L2)
     )
@@ -66,7 +70,7 @@ def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
     Convert the given [0 - 1] x, y coordinates into coordinates on the board.
     """
-    return (x * paper_width - paper_width/2, y * paper_height + 50)
+    return (x * paper_width, y * paper_height)
 
 def get_actual_angles(arm: 'ArmController') -> 'tuple[float, float]':
     """
@@ -115,16 +119,15 @@ def main():
         alpha, beta = kinematics_solution
 
         # apply alpha, beta offsets
-        alpha, beta = alpha + shoulder_offset, 180 - (beta + elbow_offset)
-
-        print(alpha, beta)
+        alpha, beta = alpha + shoulder_offset, beta + elbow_offset
         
         arm_controller.set_arm_angles(alpha, beta)
 
         # arm_controller.set_wrist_down(pen_down)
 
         # error_shoulder, error_arm = get_actual_angles(arm_controller)
-        print(board_x, board_y, f"x: {board_x:.4f}, y: {board_y:.4f}, pen: {'down' if pen_down else 'up'}")
+        print(f"alpha {alpha:.2f}, beta: {beta:.2f}")
+        print(f"x: {board_x:.2f}, y: {board_y:.2f}, pen: {'down' if pen_down else 'up'}")
         sleep_ms(50)
 
 if __name__ == "__main__":
