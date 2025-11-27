@@ -26,6 +26,8 @@ x_offset, y_offset = 0, 0
 origin_x, origin_y = 0, 0
 shoulder_length, elbow_length = 155, 155
 
+paper_height, paper_width = 215, 279.4
+
 def solve_kinematics(
     target_x: float, target_y: float,
     origin_x: float, origin_y: float,
@@ -64,7 +66,7 @@ def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
     Convert the given [0 - 1] x, y coordinates into coordinates on the board.
     """
-    return (x * 215, y * 279.4)
+    return (x * paper_width - paper_width/2, y * paper_height + 50)
 
 def get_actual_angles(arm: 'ArmController') -> 'tuple[float, float]':
     """
