@@ -1,5 +1,7 @@
-from machine import ADC, Pin, PWM
+from machine import ADC, Pin, PWM, I2C
 from servo_translator import translate
+from ads1x15 import ADS1015
+from time import sleep_ms
 
 class PotentiometerState:
     """
@@ -123,6 +125,31 @@ class ArmController:
 
         self.shoulder.duty_u16(shoulder_duty_cycle)
         self.elbow.duty_u16(elbow_duty_cycle)
+
+    def ads_get_angle(self, ads: ADS1015) -> float:
+        return ads.raw_to_v(ads.read(channel1=0)) / 3.3 * 180
+
+    def get_offset_angles(self) -> 'tuple[float, float]':
+        """
+        Calibrate the arm to get the offset angles.
+        """
+        i2c = I2C(1, scl=Pin(15), sda=Pin(14))
+        ads = ADS1015(i2c, address=0x48)
+
+        shoulder_angle = self.ads_get_angle(ads)
+        elbow_angle = self.ads_get_angle(ads)
+
+        self.set_arm_angles(0, 180)
+
+        sleep_ms(500)
+
+        shoulder_limit = self.ads_get_angle(ads)
+        elbow_limit = self.ads_get_angle(ads)
+
+        shoulder_offset = shoulder_limit - shoulder_angle
+        elbow_offset = elbow_angle - elbow_limit
+
+        return shoulder_offset, elbow_offset
 
     def move_wrist(self, pen_down: bool) -> None:
         """

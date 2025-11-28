@@ -1,4 +1,5 @@
 import math
+import json
 from time import time_ns, sleep_ms
 
 from boardio import PotentiometerState, ButtonState, ArmController
@@ -19,14 +20,13 @@ shoulder_pin = 0
 elbow_pin = 1
 wrist_pin = 2
 
-# offsets for angles and x, y positions
-shoulder_offset, elbow_offset = 42, 0
+# offsets for x, y positions
 x_offset, y_offset = 0, 0
 
 origin_x, origin_y = 0, 0
 shoulder_length, elbow_length = 155, 155
 
-paper_width, paper_height = 215, 279.4
+paper_width, paper_height = 215, 300
 
 def solve_kinematics(
     target_x: float, target_y: float,
@@ -81,10 +81,37 @@ def get_actual_angles(arm: 'ArmController') -> 'tuple[float, float]':
     """
     raise NotImplementedError()
 
+CALIBRATION_FILE = "calibration.json"
+
+def load_calibration():
+    try:
+        with open(CALIBRATION_FILE, "r") as f:
+            data = json.load(f)
+            return data["shoulder_offset"], data["elbow_offset"]
+    except (OSError, KeyError, ValueError):
+        return None
+
+def save_calibration(shoulder_offset, elbow_offset):
+    data = {"shoulder_offset": shoulder_offset, "elbow_offset": elbow_offset}
+    with open(CALIBRATION_FILE, "w") as f:
+        json.dump(data, f)
+
 def main():
     potentiometer_states = PotentiometerState(pot_pin_x, pot_pin_y, pot_poll_interval)
     button_state = ButtonState(btn_pin, btn_debounce)
     arm_controller = ArmController(shoulder_pin=shoulder_pin, elbow_pin=elbow_pin, wrist_pin=wrist_pin)
+
+    # get the offset angles from the board
+    # shoulder_offset, elbow_offset = 42, -35
+    calibration_data = load_calibration()
+    if calibration_data:
+        shoulder_offset, elbow_offset = 42, -35
+        print(f"Loaded calibration: shoulder offset: {shoulder_offset:.2f}, elbow offset: {elbow_offset:.2f}")
+    else:
+        print("Calibrating...")
+        shoulder_offset, elbow_offset = arm_controller.get_offset_angles()
+        save_calibration(shoulder_offset, elbow_offset)
+        print(f"New calibration: shoulder offset: {shoulder_offset:.2f}, elbow offset: {elbow_offset:.2f}")
 
     start = time_ns()
     while True:
@@ -128,7 +155,7 @@ def main():
         # error_shoulder, error_arm = get_actual_angles(arm_controller)
         print(f"alpha {alpha:.2f}, beta: {beta:.2f}")
         print(f"x: {board_x:.2f}, y: {board_y:.2f}, pen: {'down' if pen_down else 'up'}")
-        sleep_ms(50)
+        # sleep_ms(50)
 
 if __name__ == "__main__":
     main()

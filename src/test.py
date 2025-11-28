@@ -1,45 +1,61 @@
-def solve_kinematics(
-    target_x: float, target_y: float,
-    origin_x: float, origin_y: float,
-    shoulder_length: float, elbow_length: float,
-    ) -> 'tuple[float, float] | None':
+from machine import PWM, Pin, I2C, ADC
+from servo_translator import translate
+
+from ads1x15 import ADS1015
+from time import sleep
+
+shoulder = PWM(Pin(0), freq=50)
+elbow = PWM(Pin(1), freq=50)
+
+i2c = I2C(1, scl=Pin(15), sda=Pin(14))
+
+ads = ADS1015(i2c, address=0x48)
+
+print(ads.read(channel1=0))
+
+x = ADC(Pin(26))
+y = ADC(Pin(27))
+
+def calibrate() -> 'tuple[float, float]':
     """
-    Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
-    Returns None if there is no solution.
+    Calibrate the arm to get the offset angles.
     """
-    from math import sqrt, sin, cos, acos, atan2, degrees, atan, asin
+    i2c = I2C(1, scl=Pin(15), sda=Pin(14))
+    ads = ADS1015(i2c, address=0x48)
 
-    x = target_x - origin_x
-    y = target_y - origin_y
-    L1, L2 = shoulder_length, elbow_length
+    shoulder_angle = ads.raw_to_v(ads.read(channel1=0)) / 3.3 * 180
+    elbow_angle = ads.raw_to_v(ads.read(channel1=1)) / 3.3 * 180
 
-    AC = sqrt(
-        (x - -50)**2 + (y - 139.7)**2
-    )
+    shoulder.duty_u16(translate(0))
+    elbow.duty_u16(translate(180))
 
+    sleep(0.5)
 
-    # if the target is out of reach, return None
-    if AC > L1 + L2 or AC < abs(L1 - L2):
-        return None
+    shoulder_limit = ads.raw_to_v(ads.read(channel1=0)) / 3.3 * 180
+    elbow_limit = ads.raw_to_v(ads.read(channel1=1)) / 3.3 * 180
 
-    angle_CAAbase = asin((x + 50) / AC)
-    angle_BAC = acos(
-        (L1**2 + AC**2 - L2**2) / (2 * L1 * AC)
-    )
+    shoulder_offset = shoulder_limit - shoulder_angle
+    elbow_offset = elbow_limit - elbow_angle
 
-    alpha = angle_CAAbase - angle_BAC
-    beta = acos(
-        (L1**2 + L2**2 - AC**2) / (2 * L1 * L2)
-    )
+    return shoulder_offset, elbow_offset
 
 
-    return degrees(alpha), degrees(beta)
+shoulder_offset, elbow_offset = calibrate()
+
+print(f"shoulder offset: {shoulder_offset:.2f}, elbow offset: {elbow_offset:.2f}")
 
 
-kinematics_solution = solve_kinematics(
-            190, 250, 
-            0, 0, 
-            155, 155
-        )
-print(kinematics_solution)   
-    
+# while True:
+#     shoulder_angle = x.read_u16() / 65535 * 180
+#     elbow_angle = y.read_u16() / 65535 * 180
+
+#     shoulder_feedback = ads.raw_to_v(ads.read(channel1=0)) / 3.3 * 180
+#     elbow_feedback = ads.raw_to_v(ads.read(channel1=1)) / 3.3 * 180
+
+#     shoulder.duty_u16(translate(shoulder_angle))
+#     elbow.duty_u16(translate(elbow_angle))
+
+#     print(f"shoulder: {shoulder_angle:.2f}, elbow: {elbow_angle:.2f}")
+#     print(f"shoulder feedback: {shoulder_feedback:.2f}, elbow feedback: {elbow_feedback:.2f}")  
+
+
