@@ -83,7 +83,7 @@ def get_actual_angles(arm: 'ArmController') -> 'tuple[float, float]':
 
 CALIBRATION_FILE = "calibration.json"
 
-def load_calibration():
+def load_calibration() -> 'tuple[float, float] | None':
     try:
         with open(CALIBRATION_FILE, "r") as f:
             data = json.load(f)
@@ -102,10 +102,9 @@ def main():
     arm_controller = ArmController(shoulder_pin=shoulder_pin, elbow_pin=elbow_pin, wrist_pin=wrist_pin)
 
     # get the offset angles from the board
-    # shoulder_offset, elbow_offset = 42, -35
     calibration_data = load_calibration()
     if calibration_data:
-        shoulder_offset, elbow_offset = 42, -35
+        shoulder_offset, elbow_offset = calibration_data
         print(f"Loaded calibration: shoulder offset: {shoulder_offset:.2f}, elbow offset: {elbow_offset:.2f}")
     else:
         print("Calibrating...")

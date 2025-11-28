@@ -132,6 +132,11 @@ class ArmController:
     def get_offset_angles(self) -> 'tuple[float, float]':
         """
         Calibrate the arm to get the offset angles.
+
+        Useage: 
+        1. Move the shoulder arm parallel to the Y axis
+        2. Move the elbow arm parallel to the shoulder arm
+        3. Call the function
         """
         i2c = I2C(1, scl=Pin(15), sda=Pin(14))
         ads = ADS1015(i2c, address=0x48)
