@@ -1,5 +1,6 @@
 from math import sqrt
 from time import time_ns, sleep_ms
+from ik import solve_kinematics
 
 from boardio import PotentiometerState, ButtonState, ArmController
 
@@ -7,6 +8,13 @@ from boardio import PotentiometerState, ButtonState, ArmController
 pot_pin_x = 27
 pot_pin_y = 26
 pot_poll_interval = 50
+
+# the function to use to solve the inverse kinematics
+# (target_x: float, target_y: float,
+#  origin_x: float, origin_y: float,
+#  shoulder_length: float, elbow_length: float)
+#    -> float
+ik_solver = solve_kinematics
 
 # the pin to use for the button
 btn_pin = 12
@@ -27,40 +35,6 @@ origin_x, origin_y = 0, 0
 shoulder_length, elbow_length = 155, 155
 
 paper_height, paper_width = 215, 279.4
-
-def solve_kinematics(
-    target_x: float, target_y: float,
-    origin_x: float, origin_y: float,
-    shoulder_length: float, elbow_length: float,
-    ) -> 'tuple[float, float] | None':
-    """
-    Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
-    Returns None if there is no solution.
-    """
-    from math import sqrt, sin, cos, acos, atan2, degrees
-
-    x = target_x - origin_x
-    y = target_y - origin_y
-    L1, L2 = shoulder_length, elbow_length
-
-    AC = sqrt(x*x + y*y)
-
-    # if the target is out of reach, return None
-    if AC > L1 + L2 or AC < abs(L1 - L2):
-        return None
-
-    angle_CAX = atan(y/x)
-    angle_BAC = acos(
-        (L1**2 + AC**2 - L2**2) / (2 * L1 * AC)
-    )
-
-    alpha = angle_CAX - angle_BAC
-    beta = acos(
-        (L1**2 + L2**2 - AC**2) / (2 * L1 * L2)
-    )
-
-
-    return degrees(alpha), degrees(beta)
 
 def convert_board_coordinates(x: float, y: float) -> 'tuple[float, float]':
     """
@@ -123,7 +97,7 @@ def main():
         interp_x, interp_y = interp_x + diff_x * min(velocity_limit, velocity), interp_y + diff_y * min(velocity_limit, velocity) 
 
         # solve the inverse kinematics equations
-        kinematics_solution = solve_kinematics(
+        kinematics_solution = ik_solver(
             interp_x + x_offset, interp_y + y_offset, 
             origin_x, origin_y, 
             shoulder_length, elbow_length
