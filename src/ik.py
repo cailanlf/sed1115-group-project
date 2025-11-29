@@ -7,7 +7,7 @@ def solve_kinematics(
     Get a solution of (alpha, beta) in degrees to move the arm to the specified position.
     Returns None if there is no solution.
     """
-    from math import sqrt, sin, cos, acos, atan, atan2, degrees
+    from math import sqrt, sin, cos, acos, atan2, degrees
 
     x = target_x - origin_x
     y = target_y - origin_y
@@ -19,7 +19,7 @@ def solve_kinematics(
     if AC > L1 + L2 or AC < abs(L1 - L2):
         return None
 
-    angle_CAX = atan(y/x)
+    angle_CAX = atan2(y, x)
     angle_BAC = acos(
         (L1**2 + AC**2 - L2**2) / (2 * L1 * AC)
     )
