@@ -124,8 +124,8 @@ class ArmController:
         self.shoulder.duty_u16(shoulder_duty_cycle)
         self.elbow.duty_u16(elbow_duty_cycle)
 
-    def move_wrist(self, pen_down: bool) -> None:
+    def set_wrist_down(self, pen_down: bool) -> None:
         """
         Set the pen to down or up
         """
-        raise NotImplementedError()
+        self.wrist.duty_u16(translate(30 if pen_down else 0))

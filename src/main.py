@@ -129,24 +129,22 @@ def main():
             shoulder_length, elbow_length
         )
 
-        if kinematics_solution is None:
-            # handle this
-            sleep_ms(50)
-            continue
+        if kinematics_solution is not None:
+            alpha, beta = kinematics_solution
+
+            # apply alpha, beta offsets
+            alpha, beta = alpha + shoulder_offset, 180 - (beta + elbow_offset)
+            
+            arm_controller.set_arm_angles(alpha, beta)
+
+            arm_controller.set_wrist_down(pen_down)
+
+            # error_shoulder, error_arm = get_actual_angles(arm_controller)
+            print(f"x: {board_x:.4f}, y: {board_y:.4f}, pen: {'down' if pen_down else 'up'}")
+            print(f"alpha: {alpha:.2f}, beta: {beta:.2f}\n")
+        else:
+            print("no solution")
         
-        alpha, beta = kinematics_solution
-
-        # apply alpha, beta offsets
-        alpha, beta = alpha + shoulder_offset, 180 - (beta + elbow_offset)
-
-        print(alpha, beta)
-        
-        arm_controller.set_arm_angles(alpha, beta)
-
-        # arm_controller.set_wrist_down(pen_down)
-
-        # error_shoulder, error_arm = get_actual_angles(arm_controller)
-        print(board_x, board_y, f"x: {board_x:.4f}, y: {board_y:.4f}, pen: {'down' if pen_down else 'up'}")
         sleep_ms(50)
 
 if __name__ == "__main__":
