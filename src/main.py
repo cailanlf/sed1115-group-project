@@ -10,7 +10,7 @@ pot_pin_y = 26
 pot_poll_interval = 50
 
 # the pin to use for the button
-btn_pin = 12
+btn_pin = 22
 
 # the time in ms to debounce btn
 btn_debounce = 50.
@@ -149,7 +149,7 @@ def main():
         
         arm_controller.set_arm_angles(alpha, beta)
 
-        # arm_controller.set_wrist_down(pen_down)
+        arm_controller.move_wrist(pen_down)
 
         # error_shoulder, error_arm = get_actual_angles(arm_controller)
         print(f"alpha {alpha:.2f}, beta: {beta:.2f}")

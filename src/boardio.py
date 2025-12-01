@@ -160,4 +160,9 @@ class ArmController:
         """
         Set the pen to down or up
         """
-        raise NotImplementedError()
+        if pen_down:
+            self.wrist.duty_u16(2270)
+            print("pen down, angle: 18")
+        else:
+            self.wrist.duty_u16(1650 )
+            print("pen up, angle: 0")
