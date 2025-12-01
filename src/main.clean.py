@@ -110,7 +110,7 @@ def main():
         dist = sqrt(diff_x ** 2 + diff_y ** 2)
 
         # ---------------------------------------------------------------------
-        # ERROR HANDLING ADDED BY DANELLA:
+        # ERROR HANDLING
         # Prevent division-by-zero when the interpolated point is already
         # at the target (dist == 0). In that case, we simply don't move.
         # ---------------------------------------------------------------------
