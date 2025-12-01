@@ -3,6 +3,7 @@ import json
 from time import time_ns, sleep_ms
 
 from boardio import PotentiometerState, ButtonState, ArmController
+from kinematics_interpolator import GridInterpolator
 
 # Configuration
 pot_pin_x = 27
@@ -112,6 +113,9 @@ def main():
         save_calibration(shoulder_offset, elbow_offset)
         print(f"New calibration: shoulder offset: {shoulder_offset:.2f}, elbow offset: {elbow_offset:.2f}")
 
+    # Initialize Grid Interpolator
+    interpolator = GridInterpolator()
+
     start = time_ns()
     while True:
         # update time 
@@ -130,22 +134,29 @@ def main():
         # convert x, y to board coordinates for the arm
         board_x, board_y = convert_board_coordinates(x, y)
 
-        # solve the inverse kinematics equations
-        kinematics_solution = solve_kinematics(
-            board_x + x_offset, board_y + y_offset, 
-            origin_x, origin_y, 
-            shoulder_length, elbow_length
-        )
-
-        if kinematics_solution is None:
-            # handle this
-            sleep_ms(50)
-            continue
+        # Try interpolation first
+        interpolated_angles = interpolator.get_angles(board_x, board_y)
         
-        alpha, beta = kinematics_solution
+        if interpolated_angles:
+            alpha, beta = interpolated_angles
+            # Interpolated angles are direct servo values, no offset needed
+        else:
+            # solve the inverse kinematics equations
+            kinematics_solution = solve_kinematics(
+                board_x + x_offset, board_y + y_offset, 
+                origin_x, origin_y, 
+                shoulder_length, elbow_length
+            )
 
-        # apply alpha, beta offsets
-        alpha, beta = alpha + shoulder_offset, beta + elbow_offset
+            if kinematics_solution is None:
+                # handle this
+                sleep_ms(50)
+                continue
+            
+            alpha, beta = kinematics_solution
+
+            # apply alpha, beta offsets
+            alpha, beta = alpha + shoulder_offset, beta + elbow_offset
         
         arm_controller.set_arm_angles(alpha, beta)
 
