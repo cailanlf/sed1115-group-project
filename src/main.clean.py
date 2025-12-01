@@ -109,13 +109,20 @@ def main():
         diff_y = board_y - interp_y
         dist = sqrt(diff_x ** 2 + diff_y ** 2)
 
-        if dist > 0:
+        # ---------------------------------------------------------------------
+        # ERROR HANDLING ADDED BY DANELLA:
+        # Prevent division-by-zero when the interpolated point is already
+        # at the target (dist == 0). In that case, we simply don't move.
+        # ---------------------------------------------------------------------
+        if dist == 0:
+            dir_x, dir_y = 0.0, 0.0
+        else:
             dir_x = diff_x / dist
             dir_y = diff_y / dist
-            step = min(VELOCITY_LIMIT, dist)
-            interp_x += dir_x * step
-            interp_y += dir_y * step
-        # CLEANUP: If dist == 0 → no movement needed
+
+        step = min(VELOCITY_LIMIT, dist)
+        interp_x += dir_x * step
+        interp_y += dir_y * step
 
         # -------------------------------------------------------------------------
         # ERROR HANDLING: Protect IK solver from invalid or failing computations
